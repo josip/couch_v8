@@ -216,6 +216,9 @@ try {
 //
 // Responses are json values followed by a new line ("\n")
 
+// Default implementation uses "while(cmd = eval(readline()))"
+// For simplicity that has been modified and now C++ code calls
+// onInput() when data gets on stdin
 function onInput(cmd) {
   cmd = eval(cmd);
   try {
@@ -426,7 +429,7 @@ function toJSON(val) {
     "Number": function(v) {
       return isFinite(v) ? v.toString() : "null";
     },
-    "Object": function(v) {
+    "Object": function(v) {map_results
       if (v === null) return "null";
       var buf = [];
       for (var k in v) {

@@ -1,0 +1,15 @@
+This is simple implementation of JavaScript view server for CouchDB but using V8 (http://code.google.com/apis/v8/) engine.
+
+h2. Install (tested on Linux, Ubuntu 8.10)
+  1. Download V8 source code
+  2. Put couch_v8.cc in samples directory
+  3. Compile V8 libraries (scons mode=release library=static snapshot=on)
+  4. Open SConscript file in root directory of V8 and add "couch_v8" on lines 356 and 380
+  4. Compile couch_v8 (scons samples=couch_v8)
+  6. (optional) Copy couch_v8 binary into same directory with couchjs (on Ubuntu /usr/bin) binary and place main8.js in directory with main.js (on Ubuntu, /usr/share/couchdb/server)
+  5. Edit your CouchDB configuration to use couch_v8 binary and main8.js
+
+h2. Notes
+  * This is technically my first code written in C++ so it's probably not that good, even though it is based on example included in V8's samples.
+  * V8 dose not support E4X standard so CouchDB tests with XML will fail
+  * Also sandboxing test will fail because it has not been implemented (yet)
