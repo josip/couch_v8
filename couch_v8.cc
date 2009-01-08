@@ -185,6 +185,7 @@ Handle<Value> CouchViewServer::JSprint(const Arguments& args) {
   return Undefined();
 }
 
+// TODO: Finish it, it would probably speed up the whole thing
 Handle<Value> CouchViewServer::JStoJSON(const Arguments& args) {
   return Undefined();
   /*HandleScope handle_scope;
@@ -231,6 +232,7 @@ Handle<Value> CouchViewServer::JSsum(const Arguments& args) {
   return Number::New(rv);
 }
 
+// TODO: Finish it
 Handle<Value> CouchViewServer::JSevalcx(const Arguments& args) {
   return Undefined();
   /*HandleScope handle_scope;
@@ -282,8 +284,8 @@ int main(int argc, char* argv[]) {
   for(int i = 1; i < argc; i++) {
     const char* str = argv[i];
     if(strcmp(str, "-h") == 0) {
-      printf("USAGE: couch8 [OPTION] [FILE]\n");
-      printf("Javascript interpreArgumentster for Apache CouchDB powered by V8 VM\n\n");
+      printf("USAGE: couch_v8 [OPTION] [FILE]\n");
+      printf("Javascript view server for Apache CouchDB powered by V8 VM.\n\n");
       printf("Avaiable options:\n");
       printf("  -h  displays this message\n");
       printf("  -v  displays version information\n");
