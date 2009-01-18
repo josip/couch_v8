@@ -16,22 +16,10 @@ var map_results = []; // holds temporary emitted values during doc map
 
 var sandbox = null;
 
-// Moved to C++ code
-//emit = function(key, value) {
-//  map_results.push([key, value]);
-//}
-
-// Moved to C++ code
-//sum = function(values) {
-//  var rv = 0;
-//  for (var i in values) {
-//    rv += values[i];
-//  }
-//  return rv;
-//}
+// emit() and sum() are implemented in C++
 
 log = function(message) {
-  print(toJSON({log: toJSON(message)}));  
+  print(toJSON({log: toJSON(message)}));
 }
 
 // mimeparse.js
@@ -142,7 +130,7 @@ respondWith = function(req, responders) {
     var provides = [];
     for (key in responders) {
       if (mimesByKey[key]) {
-        provides = provides.concat(mimesByKey[key]);        
+        provides = provides.concat(mimesByKey[key]);
       }
     }
     var bestMime = Mimeparse.bestMatch(provides, accept);
@@ -157,7 +145,7 @@ respondWith = function(req, responders) {
   }
   if (responders.fallback) {
     return responders[responders.fallback]();
-  } 
+  }
   throw({code:406, body:"Not Acceptable: "+accept});
 }
 
@@ -166,7 +154,7 @@ mimesByKey = {};
 keysByMime = {};
 registerType = function() {
   var mimes = [], key = arguments[0];
-  for (var i=1, j = arguments.length; i < j; i++) {
+  for (var i=1; i < arguments.length; i++) {
     mimes.push(arguments[i]);
   };
   mimesByKey[key] = mimes;
@@ -216,11 +204,9 @@ try {
 //
 // Responses are json values followed by a new line ("\n")
 
-// Default implementation uses "while(cmd = eval(readline()))"
-// For simplicity that has been modified and now C++ code calls
-// onInput() when data gets on stdin
 function onInput(cmd) {
   cmd = eval(cmd);
+
   try {
     switch (cmd[0]) {
       case "reset":
@@ -251,7 +237,7 @@ function onInput(cmd) {
         var doc = cmd[1];
         /*
         Immutable document support temporarily removed.
-        
+
         Removed because the seal function no longer works on JS 1.8 arrays,
         instead returning an error. The sealing is meant to prevent map
         functions from modifying the same document that is passed to other map
@@ -259,11 +245,11 @@ function onInput(cmd) {
         run together, so we have a reasonable expectation they can trust each
         other. Any map fun that can't be trusted can be placed in its own
         design document, and it cannot affect other map functions.
-        
+
         recursivelySeal(doc); // seal to prevent map functions from changing doc
         */
         var buf = [];
-        for (var i = 0, j = funs.length; i < j; i++) {
+        for (var i = 0; i < funs.length; i++) {
           map_results = [];
           try {
             funs[i](doc);
@@ -280,7 +266,7 @@ function onInput(cmd) {
               throw {error: "map_runtime_error",
                   reason: "function raised fatal exception"};
             }
-            print(toJSON({log: "function raised exception (" + err 
+            print(toJSON({log: "function raised exception (" + err
               + ") with doc._id " + doc._id}));
             buf.push("[]");
           }
@@ -295,12 +281,12 @@ function onInput(cmd) {
         var values = null;
         var reduceFuns = cmd[1];
         var rereduce = false;
-        
+
         if (cmd[0] == "reduce") {
-          var kvs = cmd[2], i = kvs.length;
-          keys = new Array(i);
-          values = new Array(i);
-          while(i--) {
+          var kvs = cmd[2];
+          keys = new Array(kvs.length);
+          values = new Array(kvs.length);
+          for(var i = 0; i < kvs.length; i++) {
               keys[i] = kvs[i][0];
               values[i] = kvs[i][1];
           }
@@ -309,12 +295,13 @@ function onInput(cmd) {
           rereduce = true;
         }
 
-        for(var i in reduceFuns) {
+        var i = j = reduceFuns.length;
+        while(i--) {
           reduceFuns[i] = compileFunction(reduceFuns[i]);
         }
 
         var reductions = new Array(funs.length);
-        for(var i = 0, j = reduceFuns.length; i < j; i++) {
+        for(var i = 0; i < j; i++) {
           try {
             reductions[i] = reduceFuns[i](keys, values, rereduce);
           } catch (err) {
@@ -342,7 +329,7 @@ function onInput(cmd) {
           print(toJSON(error));
         }
         break;
-      case "form":
+      case "show_doc":
         var funSrc = cmd[1];
         var doc = cmd[2];
         var req = cmd[3];
@@ -351,12 +338,12 @@ function onInput(cmd) {
           var rendered = formFun(doc, req);
           print(toJSON(rendered));
         } catch (error) {
-          // Available error fields: 
+          // Available error fields:
           // message, fileName, lineNumber, stack, name
-          log("form function raised error: "+error.toString());
+          log("doc show function raised error: "+error.toString());
           log("stacktrace: "+error.stack);
           try {
-            print(toJSON(error));            
+            print(toJSON(error));
           } catch (e) {
             print({"error":error.toString()});
           }
@@ -429,7 +416,7 @@ function toJSON(val) {
     "Number": function(v) {
       return isFinite(v) ? v.toString() : "null";
     },
-    "Object": function(v) {map_results
+    "Object": function(v) {
       if (v === null) return "null";
       var buf = [];
       for (var k in v) {

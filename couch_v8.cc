@@ -13,7 +13,7 @@ using namespace v8;
 class CouchViewServer {
   public:
     static CouchViewServer *Instance(char* _file_name);
-    
+
     int Run();
     char* file_name;
 
@@ -60,7 +60,7 @@ CouchViewServer::CouchViewServer(char* _file_name) {
   //global->Set(String::New("toJSON"),    FunctionTemplate::New(JStoJSON));
   global->Set(String::New("emit"),      FunctionTemplate::New(JSemit));
   global->Set(String::New("sum"),       FunctionTemplate::New(JSsum));
-  global->Set(String::New("evalcx"),    FunctionTemplate::New(JSevalcx));
+  //global->Set(String::New("evalcx"),    FunctionTemplate::New(JSevalcx));
   global->Set(String::New("quit"),      FunctionTemplate::New(JSquit));
 
   // Create new context with built-in functions
@@ -69,7 +69,7 @@ CouchViewServer::CouchViewServer(char* _file_name) {
 
   // Activate newly created context
   Context::Scope context_scope(context);
-  
+
   Run();
 }
 
@@ -98,7 +98,7 @@ bool CouchViewServer::ExecuteScript() {
   HandleScope handle_scope;
   TryCatch try_catch;
   Handle<Script> compiled_script = Script::Compile(source);
-  
+
   if(compiled_script.IsEmpty()) {
     CouchViewServer::ReportException(&try_catch);
     return false;
@@ -116,7 +116,7 @@ bool CouchViewServer::ExecuteScript() {
     fprintf(stdout, "%s\n", *str);
     fflush(stdout);
   }
-  
+
   return true;
 }
 
@@ -130,20 +130,20 @@ bool CouchViewServer::PersistInputCallbackFn() {
     ReportError("There is no 'onInput' function");
     return false;
   }
-  
+
   Handle<Function> cb_fn = Handle<Function>::Cast(cb);
   input_cb_ = Persistent<Function>::New(cb_fn);
-  
+
   return true;
 }
 
 int CouchViewServer::Run() {
   HandleScope handle_scope;
-  
+
   if(ReadFile()) {
     if(!ExecuteScript()) return 1;
     if(!PersistInputCallbackFn()) return 1;
-    
+
     RunShell();
   } else {
     ReportError("Error while reading file");
@@ -158,7 +158,7 @@ void CouchViewServer::RunShell() {
     getline(cin, line);
 
     if(line.size() == 0) exit(0);
-    
+
     HandleScope handle_scope;
     const int argc = 1;
     Handle<String> input = String::New(line.c_str());
@@ -179,7 +179,7 @@ Handle<Value> CouchViewServer::JSprint(const Arguments& args) {
     String::Utf8Value str(args[i]);
     fprintf(stdout, "%s", *str);
   }
-  
+
   fputc('\n', stdout);
   fflush(stdout);
   return Undefined();
@@ -189,70 +189,54 @@ Handle<Value> CouchViewServer::JSprint(const Arguments& args) {
 Handle<Value> CouchViewServer::JStoJSON(const Arguments& args) {
   return Undefined();
   /*HandleScope handle_scope;
-  
+
   if(args[0]->IsUndefined()) {
     ReportError("Cannot encode 'undefined' value as JSON");
     return String::New("");
   }
-  
+
   Local<Object> obj = Local<Object>::Cast(args[0]);
   string json;
-  
+
   return String::New(json->c_str());*/
 }
 
 Handle<Value> CouchViewServer::JSemit(const Arguments& args) {
   HandleScope handle_scope;
-  
+
   Local<Value> results_ = Context::GetCurrent()->Global()->Get(String::New("map_results"));
   Local<Array> results = Local<Array>::Cast(results_);
-  
+
   Local<Array> res = Array::New(2);
   res->Set(Number::New(0), args[0]);
   res->Set(Number::New(1), args[1]);
 
   results->Set(Number::New(results->Length()), res);
-  
+
   return Undefined();
 }
 
 Handle<Value> CouchViewServer::JSsum(const Arguments& args) {
   HandleScope handle_scope;
-  
+
   int rv = 0;
   Local<Object> values = Local<Object>::Cast(args[0]);
   Local<Array> values_names = values->GetPropertyNames();
   int len = values_names->Length();
-  
+
   for(int n = 0; n < len; n++) {
     Local<Number> i = Number::New(n);
     rv += values->Get(values_names->Get(i))->Int32Value();
   }
-  
+
   return Number::New(rv);
 }
 
-// TODO: Finish it
+/* TODO: It takes way to much memory (30+ megs)!
+ *       It's not that important to have it...
+ */
 Handle<Value> CouchViewServer::JSevalcx(const Arguments& args) {
   return Undefined();
-  /*HandleScope handle_scope;
-  TryCatch try_catch;
-  
-  Handle<Value> fn_code = args[0];
-  Handle<Function> fn = Handle<Function>::Cast(fn_code);
-  Handle<Object> obj = Handle<Object>::Cast(args[1]);
-  Handle<ObjectTemplate> global_obj = ObjectTemplate::New(obj);
-  Handle<Context> tmp_ctx = Context::New(0, global_obj);
- 
-  Context::Scope context_scope(tmp_ctx);
-  Handle<Script> compiled_fn = Script::Compile(fn);
-  
-  if(compiled_fn.IsEmpty()) {
-    return try_catch.Exception();
-  }
-  
-  return compiled_fn;*/
-  
 }
 
 Handle<Value> CouchViewServer::JSquit(const Arguments& args) {
@@ -280,7 +264,7 @@ int main(int argc, char* argv[]) {
   // expose gc() function to JS code (ie. Garbage collector)
   static const char v8Flags [ ] = "--expose-gc";
   V8::SetFlagsFromString (v8Flags, sizeof (v8Flags) - 1);
-  
+
   for(int i = 1; i < argc; i++) {
     const char* str = argv[i];
     if(strcmp(str, "-h") == 0) {
