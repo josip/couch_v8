@@ -169,7 +169,7 @@ void CouchViewServer::RunShell() {
 
 Handle<Value> CouchViewServer::JSprint(const Arguments& args) {
   bool first = true;
-  for(int i = 0; i < args.Length(); i++) {
+  for(int i = 0, j = args.Length(); i < j; i++) {
     HandleScope handle_scope;
     if(first)
         first = false;
